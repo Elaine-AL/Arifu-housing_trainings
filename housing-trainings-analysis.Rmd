@@ -1,0 +1,128 @@
+---
+title: "housing trainings analysis"
+author: "Elaine A."
+date: "May 20, 2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r}
+#load the necessary files
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+
+```
+
+```{r}
+#load the file to R dataframe
+housing = read.csv("C:/Users/Elaine/Documents/housing_trainings/housing-dataset.csv", header = TRUE)
+View(housing)
+```
+
+```{r}
+#view the structure and summary of the dataset
+str(housing)
+summary(housing)
+```
+```{r}
+#clean the data
+anyNA(housing)
+housing$user_response[is.na(housing$user_response)] = NA
+```
+
+```{r}
+## 1. How many learners were in the housing trainings project?
+n_distinct(housing$learner_id)
+# there were 15, 641 learners
+```
+
+```{r}
+## 2. Which were the 3 most popular trainings? (Trainings with the most learners)?
+#we first group the trainings(programe_code) and then count the unique learners
+# then rearrange the list to descending order and get the top three trainings
+most_popular = housing %>% group_by(program_code) %>% summarise(n_distinct(learner_id))
+most_popular_des = most_popular[order(most_popular$`n_distinct(learner_id)`, decreasing = TRUE), ] %>% head(3)
+most_popular_des
+
+```
+```{r}
+## 3. Which learner had the most interactions and how many interactions did they have?
+# group by learners and count the number of interactions(X) each had in the project. Then rearrange the list in descending order and get the top most
+most_interactive = housing %>% group_by(learner_id) %>% summarise(n_distinct(X))
+most_interactive_L = most_interactive[order(most_interactive$`n_distinct(X)`, decreasing = TRUE), ] %>% head(10)
+most_interactive_L
+
+# the most interactive learner had ID 648424 with 1,172 interactions
+```
+```{r}
+## 4. How many learners had more than 100 interactions (>100) ?
+# we'll use the which() function to check whether a condition was met and length() to get the number of ocuurences that satisfy the which() function
+more_100 = length(which(most_interactive$`n_distinct(X)` > 100))
+more_100
+
+# there were 756 learners with more than 100 interactions
+
+```
+
+```{r}
+## 5. How many learners had 100 or less interactions (<= 100)?
+# there are two ways of solving this:
+#first:--
+15641 - 756 #total number of learners subracted those with more than 100 interactions
+
+# or:--
+length(which(most_interactive$`n_distinct(X)` <= 100)) #use of the which() and length() functions
+
+#both will give you 14, 885 learners with less than or equal to 100 interactions
+```
+
+```{r}
+## 5a. For the 100 or less learners derive summary statistics of their interactions count and visualize the distribution of their interaction counts (i.e interactions count is the number of interactions they had in the project).
+less_100 = filter(most_interactive, most_interactive$`n_distinct(X)` <=100)
+less_100
+summary(less_100)
+# the statistics show that the least number of interaction per learner is 1 and the counts are centered around 14, that is, it ranges between 4 to 30 interactions per learner. This means the data is skewed to the right.
+
+```
+
+```{r}
+##visualization of the interaction count they had in the project
+# frequency distribution
+less_100_plot = ggplot(less_100, aes(less_100$`n_distinct(X)`)) + geom_histogram(binwidth = 1, color = "black", fill = "steelblue2") + labs(title = "Interaction count distribution") + geom_vline(aes(xintercept = mean(less_100$`n_distinct(X)`)), color = "red")
+
+less_100_plot
+# the distribution of interaction count shows a strong positive skew with a mean of 21(from the red line). It also shows that most of the learners only had one interaction and the most frequent being between 6 and 25.
+#*(there are no outliers)
+
+#density distribution
+less_100_plot2 = ggplot(less_100, aes(less_100$`n_distinct(X)`)) + geom_density(fill = "#FF6666", alpha = 0.3) + labs(title = "Density distribution of interaction count") + geom_vline(aes(xintercept = mean(less_100$`n_distinct(X)`)), color = "blue")
+
+less_100_plot2
+# the distribution is positively skewed(skewed to the right) with a smooth slope. Most of the interactions per learner can be seen to range from 6 to 30 with a mean of 21(blue line).
+```
+
+```{r}
+## 6. Which day of the week had the most interactions and which had the least interactions?
+# let's convert the date column(created_at) to day of the week with wday() function
+week_day = wday(housing$created_at, week_start = 1, label = TRUE, abbr = FALSE)
+# then add the vector column to our dataframe using cbind()
+housing = cbind(housing, week_day)
+View(housing)
+# create a datframe with only the columns we wish to use :- interactionID column, that is, X column and the week_day column
+interactive_day = subset(housing, select = c(X, week_day))
+# get the number of interactions per day of the week
+interactive_day_list = interactive_day %>% group_by(week_day) %>% summarise(n_distinct(X)) 
+interactive_day_list = interactive_day_list[order(interactive_day_list$`n_distinct(X)`, decreasing = TRUE), ]
+
+interactive_day_list
+# plot your results to a bar chart
+interactive_day_plot = ggplot(interactive_day, aes(x = week_day)) + geom_bar(stat = "count", fill = "steelblue2") + theme_minimal() + labs(title = "Number of interactions per dayOfWeek") + scale_fill_grey()
+
+interactive_day_plot
+
+# the most interactive day of the week was Wednesday with 145,590 interactions and the least interactive was Monday with 14,096 interactions 
+
+```
+
