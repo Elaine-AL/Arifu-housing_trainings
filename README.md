@@ -27,4 +27,6 @@ interactions**
 5. a. For the 100 or less learners derive summary statistics of their interactions count and visualize the distribution of their
 interaction counts (i.e interactions count is the number of interactions they had in the project).
 
+![Image](https://raw.githubusercontent.com/Elaine-AL/Arifu-housing_trainings/master/Density%20distribution%20of%20interaction%20count.png)
+
 
