@@ -15,8 +15,8 @@ library(lubridate)
 
 ```
 
+load the file to R dataframe
 ```{r}
-#load the file to R dataframe
 housing = read.csv("C:/Users/Elaine/Documents/housing_trainings/housing-dataset.csv", header = TRUE)
 View(housing)
 ```
